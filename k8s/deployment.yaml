@@ -16,15 +16,46 @@ spec:
     spec:
       containers:
       - name: "goserver"
-        image: "thecris/hello-go:v5"
-        env:
-          - name: NAME
-            valueFrom:
-              configMapKeyRef:
-                name: goserver-env
-                key: NAME
-          - name: AGE
-            valueFrom:
-              configMapKeyRef:
-                name: goserver-env
-                key: AGE
+        image: "thecris/hello-go:v6.3"
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          periodSeconds: 3
+          failureThreshold: 10
+
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          periodSeconds: 3
+          failureThreshold: 1
+          timeoutSeconds: 1
+          #initialDelaySeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          periodSeconds: 5
+          failureThreshold: 1
+          timeoutSeconds: 1
+          successThreshold: 1
+          #initialDelaySeconds: 15
+        envFrom:
+          - configMapRef: 
+              name: goserver-env
+          - secretRef:
+              name: goserver-secret
+
+        volumeMounts:
+          - mountPath: "/go/enviroments"
+            name: config      
+            readOnly: true
+
+      volumes:
+        - name: config
+          configMap:
+            name: configmap-enviroments
+            items:
+              - key: valores
+                path: "teste.txt"
